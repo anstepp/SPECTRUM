@@ -2,10 +2,11 @@ rtsetparams(44100, 2)
 load("./libSPECTRUM.so")
 
 
-for (st = 0; st < 10; st += 1) {
-   dur = 1.1;
-   amp = 10000
-   freq = irand(400,1500)
-   SPECTRUM(st, dur, amp, freq, 10)
+for (st = 0; st < 100; st += 10) {
+   dur = 10.1;
+   amp = 10000;
+   freq = irand(400,1500);
+   table = maketable("curve", "nonorm", 1000, 0,0,2, 500,50,2, 1000,0);
+   SPECTRUM(st, dur, amp, freq, 10, table, 1);
 }
 

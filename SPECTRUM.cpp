@@ -16,14 +16,17 @@
 
 
 SPECTRUM::SPECTRUM()
-	: _branch(0)
+	
 {
+	_branch = 0;
+	detunetable = NULL;
 }
 
 
 SPECTRUM::~SPECTRUM()
 {
 	delete [] wavetable;
+	delete detunetable;
 }
 
 
@@ -45,18 +48,18 @@ int SPECTRUM::init(double p[], int n_args)
 	if (outputChannels() > 2)
 		return die("SPECTRUM", "Use mono or stereo output only.");
 
-	_amp = p[3];
+	_amp = p[2];
 
-	float freqraw = p[4];
+	float freqraw = p[3];
 	float freq;
 	if (freqraw < 15.0)
 		freq = cpspch(freqraw);
 	else
 		freq = freqraw;
 
-	partials = p[5];
+	partials = p[4];
 
-	Ooscili *osc[partials];
+	osc = new Ooscili * [partials];
 
 	//create sine wave
 	tablelen = 1024;
@@ -67,8 +70,23 @@ int SPECTRUM::init(double p[], int n_args)
 	}
 
 	for (int i = 0; i < partials; i++){
-		*osc[i] = Ooscili(SR, freq, *wavetable);
+		osc[i] = new Ooscili(SR, freq * i, wavetable, tablelen);
 	}
+
+	//table for detuning p[5]
+	detunetable = floc(1);
+	int len = fsize(1);
+	theDetuner = new Ooscili(1.0/dur, dur, detunetable, len);
+	resetcount = 0;
+	resetsamps = 1;
+	//seed
+	
+	int seed = p[6];
+	theRand = new Orand(seed);
+
+
+
+
 
 	return nSamps();
 }
@@ -84,6 +102,22 @@ int SPECTRUM::configure()
 
 void SPECTRUM::doupdate()
 {
+
+	double p[5];
+	update(p, 5);
+
+	if (resetcount >= resetsamps){
+		detuneamount = theDetuner->next(currentFrame());
+		resetcount = 0;
+	}
+
+	for (int i = 0; i < partials; i++){
+		float freqraw = freq;
+		float detunebottom = freqraw - (detuneamount / 2);
+		float detunetop = freqraw + (detuneamount / 2);
+		float adjust = freqraw + theRand->range(detunebottom, detunetop);
+		osc[i]->setfreq(freqraw + adjust);
+	}
 
 }
 
@@ -101,7 +135,7 @@ int SPECTRUM::run()
 
 		for (int j = 0; j < partials; j++){
 
-			out [0] = osc[j]->next() * _amp;
+			out [0] = (osc[j]->next() * _amp / partials);
 
 		}
 

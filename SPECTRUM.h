@@ -15,16 +15,23 @@ public:
 	virtual int configure();
 	virtual int run();
 
-	bool ownwavetable;
+	double *detunetable;
 
 private:
 	void doupdate();
 
 	int _nargs, _branch;
 	int partials, tablelen;
-	float _amp;
+	float _amp, freq;
+	float detuneamount;
 	double *wavetable;
 
 	Ooscili **osc;
+
+	Ooscili *theDetuner;
+	int resetcount, resetsamps;
+
+	Orand *theRand;
+
 };
 
