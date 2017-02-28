@@ -62,7 +62,7 @@ int SPECTRUM::init(double p[], int n_args)
 	osc = new Ooscili * [partials];
 
 	//create sine wave
-	tablelen = 1024;
+	tablelen = 2048;
 	wavetable = new double [tablelen];
 	const double twopi = M_PI * 2.0;
 	for (int i = 0; i < tablelen; i++){
@@ -70,23 +70,18 @@ int SPECTRUM::init(double p[], int n_args)
 	}
 
 	for (int i = 0; i < partials; i++){
-		osc[i] = new Ooscili(SR, freq * i, wavetable, tablelen);
+		osc[i] = new Ooscili(SR, freq * (i + 1), wavetable, tablelen);
 	}
 
 	//table for detuning p[5]
-	detunetable = floc(1);
-	int len = fsize(1);
-	theDetuner = new Ooscili(1.0/dur, dur, detunetable, len);
-	resetcount = 0;
-	resetsamps = 1;
+	int wavelen;
+	double *wavet = (double *) getPFieldTable(5, &wavelen);
+	theDetuner = new Ooscili(SR, 1.0/dur, wavet, wavelen);
+	
 	//seed
 	
 	int seed = p[6];
 	theRand = new Orand(seed);
-
-
-
-
 
 	return nSamps();
 }
@@ -103,21 +98,21 @@ int SPECTRUM::configure()
 void SPECTRUM::doupdate()
 {
 
-	double p[5];
-	update(p, 5);
+	// double p[5];
+	// update(p, 5);
 
-	if (resetcount >= resetsamps){
-		detuneamount = theDetuner->next(currentFrame());
-		resetcount = 0;
-	}
+	// if (resetcount >= resetsamps){
+	// 	detuneamount = theDetuner->next(currentFrame());
+	// 	resetcount = 0;
+	// }
 
-	for (int i = 0; i < partials; i++){
-		float freqraw = freq;
-		float detunebottom = freqraw - (detuneamount / 2);
-		float detunetop = freqraw + (detuneamount / 2);
-		float adjust = freqraw + theRand->range(detunebottom, detunetop);
-		osc[i]->setfreq(freqraw + adjust);
-	}
+	// for (int i = 0; i < partials; i++){
+	// 	float freqraw = freq;
+	// 	float detunebottom = freqraw - (detuneamount / 2);
+	// 	float detunetop = freqraw + (detuneamount / 2);
+	// 	float adjust = freqraw + theRand->range(detunebottom, detunetop);
+	// 	osc[i]->setfreq(freqraw + adjust);
+	// }
 
 }
 
@@ -131,11 +126,13 @@ int SPECTRUM::run()
 			_branch = getSkip();
 		}
 
-		float out[1];
+		float out[0];
 
 		for (int j = 0; j < partials; j++){
 
-			out [0] = (osc[j]->next() * _amp / partials);
+			float sig = osc[j]->next() * _amp;
+			sig = sig / j;
+			out [0] += sig;
 
 		}
 
