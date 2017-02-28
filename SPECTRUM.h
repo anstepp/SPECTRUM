@@ -15,12 +15,15 @@ public:
 	virtual int configure();
 	virtual int run();
 
+	bool ownwavetable;
+
 private:
 	void doupdate();
 
 	int _nargs, _branch;
 	int partials, tablelen;
 	float _amp;
+	double *wavetable;
 
 	Ooscili **osc;
 };

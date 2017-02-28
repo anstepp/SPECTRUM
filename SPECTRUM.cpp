@@ -23,6 +23,7 @@ SPECTRUM::SPECTRUM()
 
 SPECTRUM::~SPECTRUM()
 {
+	delete [] wavetable;
 }
 
 
@@ -58,9 +59,9 @@ int SPECTRUM::init(double p[], int n_args)
 	Ooscili *osc[partials];
 
 	//create sine wave
-	const double twopi = M_PI * 2;
-	tablelen = 1000;
-	int wavetable[tablelen];
+	tablelen = 1024;
+	wavetable = new double [tablelen];
+	const double twopi = M_PI * 2.0;
 	for (int i = 0; i < tablelen; i++){
 		wavetable[i] = sin(twopi * ((double) i / tablelen));
 	}
@@ -100,7 +101,7 @@ int SPECTRUM::run()
 
 		for (int j = 0; j < partials; j++){
 
-			out [0] += osc[j]->next() * _amp;
+			out [0] = osc[j]->next() * _amp;
 
 		}
 
