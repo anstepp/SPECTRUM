@@ -15,7 +15,8 @@ public:
 	virtual int configure();
 	virtual int run();
 
-	double *detunetable;
+	double *detunetable; 
+	float *freqarray;
 
 private:
 	void doupdate();
@@ -27,10 +28,7 @@ private:
 	double *wavetable;
 
 	Ooscili **osc;
-
 	Ooscili *theDetuner;
-	int resetcount, resetsamps;
-
 	Orand *theRand;
 
 };

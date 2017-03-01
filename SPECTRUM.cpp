@@ -5,7 +5,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <ugens.h>
-#include "SPECTRUM.h"			  // declarations for this instrument class
+#include "SPECTRUM.h"
 #include <rt.h>
 #include <rtdefs.h>
 #include <stdlib.h>
@@ -89,7 +89,7 @@ int SPECTRUM::init(double p[], int n_args)
 
 int SPECTRUM::configure()
 {
-	return 0;	// IMPORTANT: Return 0 on success, and -1 on failure.
+	return 0;
 }
 
 
@@ -98,20 +98,16 @@ int SPECTRUM::configure()
 void SPECTRUM::doupdate()
 {
 
-	// double p[5];
+	// double p[_nargs];
 	// update(p, 5);
 
-	// if (resetcount >= resetsamps){
-	// 	detuneamount = theDetuner->next(currentFrame());
-	// 	resetcount = 0;
-	// }
-
 	// for (int i = 0; i < partials; i++){
-	// 	float freqraw = freq;
+	// 	float freqraw = freq * (i + 1);
 	// 	float detunebottom = freqraw - (detuneamount / 2);
 	// 	float detunetop = freqraw + (detuneamount / 2);
 	// 	float adjust = freqraw + theRand->range(detunebottom, detunetop);
-	// 	osc[i]->setfreq(freqraw + adjust);
+	// 	freq = freqraw + adjust;
+	// 	osc[i]->setfreq(freq);
 	// }
 
 }
@@ -126,18 +122,19 @@ int SPECTRUM::run()
 			_branch = getSkip();
 		}
 
-		float out[0];
+		float out[2];
 
 		for (int j = 0; j < partials; j++){
 
 			float sig = osc[j]->next() * _amp;
-			sig = sig / j;
-			out [0] += sig;
+			sig = sig / (partials * (j+1));
+			out[0] += sig;
 
 		}
 
-		rtaddout(out);
+		out[1] = 0;
 
+		rtaddout(out);
 		increment();
 	}
 
