@@ -76,7 +76,10 @@ int SPECTRUM::init(double p[], int n_args)
 	int wavelen;
 	double *wavet = (double *) getPFieldTable(5, &wavelen);
 	theDetuner = new Ooscili(1.0/dur, dur, wavet, wavelen);
-	
+	resetcount = 0;
+	resetsamps = 100;
+
+
 	//seed
 	
 	int seed = p[6];
@@ -115,15 +118,31 @@ int SPECTRUM::run()
 		for (int j = 0; j < partials; j++){
 
 			float current_freq = freq * (j + 1);
-			current_freq += theDetuner->next(currentFrame());
-			//printf("%f, %f\n", freq, current_freq);
+
+			if (resetcount >= resetsamps){
+
+				current_freq += theDetuner->next(currentFrame());
+				//printf("%f, %f\n", freq, current_freq);
+
+				resetcount = 0;
+			}
+
 			osc[j]->setfreq(current_freq);
-			float local_amp = _amp / (j + 1);
+			float local_amp = (_amp / (j + 1)) / (partials / 3);
 			float sig = osc[j]->next() * local_amp;
 			out[0] += sig;
+
+
 		}
 
 		out[1] = 0;
+
+		resetcount++;
+		int howMany = 0;
+		if (resetcount == 100){
+			howMany++;
+			printf("%i\n", howMany);
+		}
 
 		rtaddout(out);
 		increment();

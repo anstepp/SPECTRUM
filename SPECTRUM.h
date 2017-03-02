@@ -22,7 +22,7 @@ private:
 	void doupdate();
 
 	int _nargs, _branch;
-	int partials, tablelen;
+	int partials, tablelen, resetcount, resetsamps;
 	float _amp, freq;
 	float detuneamount;
 	double *wavetable;
