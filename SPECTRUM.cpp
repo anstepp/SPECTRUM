@@ -51,7 +51,6 @@ int SPECTRUM::init(double p[], int n_args)
 	_amp = p[2];
 
 	float freqraw = p[3];
-	float freq;
 	if (freqraw < 15.0)
 		freq = cpspch(freqraw);
 	else
@@ -62,7 +61,7 @@ int SPECTRUM::init(double p[], int n_args)
 	osc = new Ooscili * [partials];
 
 	//create sine wave
-	tablelen = 2048;
+	tablelen = 1024;
 	wavetable = new double [tablelen];
 	const double twopi = M_PI * 2.0;
 	for (int i = 0; i < tablelen; i++){
@@ -76,7 +75,7 @@ int SPECTRUM::init(double p[], int n_args)
 	//table for detuning p[5]
 	int wavelen;
 	double *wavet = (double *) getPFieldTable(5, &wavelen);
-	theDetuner = new Ooscili(SR, 1.0/dur, wavet, wavelen);
+	theDetuner = new Ooscili(1.0/dur, dur, wavet, wavelen);
 	
 	//seed
 	
@@ -97,19 +96,6 @@ int SPECTRUM::configure()
 
 void SPECTRUM::doupdate()
 {
-
-	// double p[_nargs];
-	// update(p, 5);
-
-	// for (int i = 0; i < partials; i++){
-	// 	float freqraw = freq * (i + 1);
-	// 	float detunebottom = freqraw - (detuneamount / 2);
-	// 	float detunetop = freqraw + (detuneamount / 2);
-	// 	float adjust = freqraw + theRand->range(detunebottom, detunetop);
-	// 	freq = freqraw + adjust;
-	// 	osc[i]->setfreq(freq);
-	// }
-
 }
 
 
@@ -124,12 +110,17 @@ int SPECTRUM::run()
 
 		float out[2];
 
+		out[0] = 0;
+
 		for (int j = 0; j < partials; j++){
 
-			float sig = osc[j]->next() * _amp;
-			sig = sig / (partials * (j+1));
+			float current_freq = freq * (j + 1);
+			current_freq += theDetuner->next(currentFrame());
+			//printf("%f, %f\n", freq, current_freq);
+			osc[j]->setfreq(current_freq);
+			float local_amp = _amp / (j + 1);
+			float sig = osc[j]->next() * local_amp;
 			out[0] += sig;
-
 		}
 
 		out[1] = 0;
