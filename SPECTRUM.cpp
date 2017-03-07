@@ -12,32 +12,61 @@
 #include <Instrument.h>
 #include <ugens.h>
 #include <Ougens.h>
-
+#include <vector>
 
 
 SPECTRUM::SPECTRUM()
 	
 {
 	_branch = 0;
-	detunetable = NULL;
 }
 
 
 SPECTRUM::~SPECTRUM()
 {
 	delete [] wavetable;
-	delete detunetable;
+	delete [] freqarray;
+	delete [] osc;
+	delete [] theDetuners;
+	for (int i = 0; i < partials; i++){
+		delete osc[i];
+		delete theDetuners[i];
+	}
 }
 
 
+double * SPECTRUM::getDetuneArray(double array[], int arrayLen, int partial)
+{
+	returnArray = new double [arrayLen];
+	float val = theRand->rand();
+	float mult = 1;
+	if (val > 0) {
+		mult = 0.5 * (partial + 1);
+	} else {
+		mult = -0.5 * (partial + 1);
+	}
+	float lastI = array[0];
+	for (int i = 0; i < arrayLen; i++){
+		returnArray[i] = array[i] * mult;
+		//printf("%f\n", returnArray[i]);
+		if (lastI == 0.0 && array[i] > 0.0 || lastI == 0.0 && array[i] < 0.0){
+			float val = theRand->rand();
+			if (val > 0) {
+				mult = 0.5 * (partial + 1);
+			} else {
+				mult = -0.5 * (partial + 1);
+			}
+		}
+		lastI = array[i];
+	}
+	return returnArray;
+}
+
 int SPECTRUM::init(double p[], int n_args)
 {
-	_nargs = n_args;		// store this for use in doupdate()
 
-	// Store pfields in variables, to allow for easy pfield renumbering.
-	// You should retain the RTcmix numbering convention for the first
-	// 4 pfields: outskip, inskip, dur, amp; or, for instruments that 
-	// take no input: outskip, dur, amp.
+	int seed = p[6];
+	theRand = new Orand(seed);
 
 	const float outskip = p[0];
 	const float dur = p[1];
@@ -59,6 +88,7 @@ int SPECTRUM::init(double p[], int n_args)
 	partials = p[4];
 
 	osc = new Ooscili * [partials];
+	theDetuners = new Ooscili * [partials];
 
 	//create sine wave
 	tablelen = 1024;
@@ -68,22 +98,20 @@ int SPECTRUM::init(double p[], int n_args)
 		wavetable[i] = sin(twopi * ((double) i / tablelen));
 	}
 
-	for (int i = 0; i < partials; i++){
-		osc[i] = new Ooscili(SR, freq * (i + 1), wavetable, tablelen);
-	}
-
 	//table for detuning p[5]
 	int wavelen;
 	double *wavet = (double *) getPFieldTable(5, &wavelen);
-	theDetuner = new Ooscili(SR, 1.0/dur, wavet, wavelen);
-	resetcount = 0;
-	resetsamps = 100;
 
+	for (int i = 0; i < partials; i++){
+		double *theArray = getDetuneArray(wavet, wavelen, i);
+		theDetuners[i] = new Ooscili(SR, 1.0/dur, theArray, wavelen);
+	}
 
-	//seed
-	
-	int seed = p[6];
-	theRand = new Orand(seed);
+	for (int i = 0; i < partials; i++){
+		//make oscillator bank
+		osc[i] = new Ooscili(SR, freq * (i + 1), wavetable, tablelen);
+	}
+
 
 	return nSamps();
 }
@@ -101,7 +129,6 @@ void SPECTRUM::doupdate()
 {
 }
 
-
 int SPECTRUM::run()
 {
 	for (int i = 0; i < framesToRun(); i++) {
@@ -117,16 +144,13 @@ int SPECTRUM::run()
 
 		for (int j = 0; j < partials; j++){
 
-			float current_freq = freq * (j + 1);
-			float max_displacement = theDetuner->next(currentFrame());
-			float rand_max = current_freq + ((max_displacement / 2) * (j+1));
-			float rand_min = current_freq - ((max_displacement / 2) * (j+1));
-			current_freq = theRand->range(rand_min, rand_max);
+			float detuneAmount = theDetuners[j]->next(currentFrame());
+			//printf("%f\n", detuneAmount);
+			float current_freq = freq + detuneAmount;
 			osc[j]->setfreq(current_freq);
 			float local_amp = (_amp / (j + 1)) / (partials / 3);
 			float sig = osc[j]->next() * local_amp;
 			out[0] += sig;
-
 			
 		}
 

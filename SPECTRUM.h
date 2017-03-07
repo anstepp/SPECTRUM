@@ -17,18 +17,19 @@ public:
 
 	double *detunetable; 
 	float *freqarray;
+	double *returnArray;
 
 private:
 	void doupdate();
+	double * getDetuneArray(double *, int, int);
 
-	int _nargs, _branch;
-	int partials, tablelen, resetcount, resetsamps;
+	int _branch;
+	int partials, tablelen;
 	float _amp, freq;
-	float detuneamount;
 	double *wavetable;
 
 	Ooscili **osc;
-	Ooscili *theDetuner;
+	Ooscili **theDetuners;
 	Orand *theRand;
 
 };
