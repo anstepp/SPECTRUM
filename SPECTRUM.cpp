@@ -12,7 +12,6 @@
 #include <Instrument.h>
 #include <ugens.h>
 #include <Ougens.h>
-#include <vector>
 
 
 SPECTRUM::SPECTRUM()
@@ -24,14 +23,15 @@ SPECTRUM::SPECTRUM()
 
 SPECTRUM::~SPECTRUM()
 {
-	delete [] wavetable;
-	delete [] freqarray;
-	delete [] osc;
-	delete [] theDetuners;
 	for (int i = 0; i < partials; i++){
 		delete osc[i];
 		delete theDetuners[i];
 	}
+	delete [] wavetable;
+	delete [] osc;
+	delete [] theDetuners;
+	delete [] theRand;
+
 }
 
 
@@ -49,7 +49,7 @@ double * SPECTRUM::getDetuneArray(double array[], int arrayLen, int partial)
 	for (int i = 0; i < arrayLen; i++){
 		returnArray[i] = array[i] * mult;
 		//printf("%f\n", returnArray[i]);
-		if (lastI == 0.0 && array[i] > 0.0 || lastI == 0.0 && array[i] < 0.0){
+		if ((lastI == 0.0 && array[i] > 0.0) || (lastI == 0.0 && array[i] < 0.0)){
 			float val = theRand->rand();
 			if (val > 0) {
 				mult = 0.5 * (partial + 1);
@@ -148,7 +148,7 @@ int SPECTRUM::run()
 			//printf("%f\n", detuneAmount);
 			float current_freq = freq + detuneAmount;
 			osc[j]->setfreq(current_freq);
-			float local_amp = (_amp / (j + 1)) / (partials / 3);
+			float local_amp = (_amp / (j + 1));
 			float sig = osc[j]->next() * local_amp;
 			out[0] += sig;
 			
