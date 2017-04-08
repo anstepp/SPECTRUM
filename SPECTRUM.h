@@ -18,6 +18,7 @@ public:
 	double *detunetable; 
 	float *freqarray;
 	double *returnArray;
+	double *onsetArray;
 
 private:
 	void doupdate();
@@ -28,9 +29,12 @@ private:
 	float _amp, freq;
 	double *wavetable;
 
+	int **lastOnsetState;
+
 	Ooscili **osc;
 	Ooscili **theDetuners;
 	Orand *theRand;
+	Ooscili *onsetTimes;
 
 };
 

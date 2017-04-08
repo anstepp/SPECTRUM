@@ -12,12 +12,13 @@
 #include <Instrument.h>
 #include <ugens.h>
 #include <Ougens.h>
-
+#include <typeinfo>
 
 SPECTRUM::SPECTRUM()
 	
 {
 	_branch = 0;
+
 }
 
 
@@ -31,9 +32,9 @@ SPECTRUM::~SPECTRUM()
 	delete [] osc;
 	delete [] theDetuners;
 	delete [] theRand;
+	delete [] lastOnsetState;
 
 }
-
 
 double * SPECTRUM::getDetuneArray(double array[], int arrayLen, int partial)
 {
@@ -65,7 +66,7 @@ double * SPECTRUM::getDetuneArray(double array[], int arrayLen, int partial)
 int SPECTRUM::init(double p[], int n_args)
 {
 
-	int seed = p[6];
+	int seed = p[7];
 	theRand = new Orand(seed);
 
 	const float outskip = p[0];
@@ -112,6 +113,19 @@ int SPECTRUM::init(double p[], int n_args)
 		osc[i] = new Ooscili(SR, freq * (i + 1), wavetable, tablelen);
 	}
 
+	int onsetLen;
+	double *onsetArray = (double *) getPFieldTable(6, &onsetLen);
+	onsetTimes = new Ooscili(SR, 1.0/partials, onsetArray, onsetLen);
+
+	lastOnsetState = new int*[partials];
+
+	for (int i = 0; i < partials; i++){
+		lastOnsetState[i] = new int[2];
+		for (int j = 0; j < 2; j++){
+			lastOnsetState[i][j] = 0;
+			printf("%i\n", lastOnsetState[i][j]);
+		}
+	}
 
 	return nSamps();
 }
@@ -127,6 +141,9 @@ int SPECTRUM::configure()
 
 void SPECTRUM::doupdate()
 {
+	// double p[7];
+	// update(p, 2);
+	// _amp = p[2];
 }
 
 int SPECTRUM::run()
@@ -142,14 +159,30 @@ int SPECTRUM::run()
 
 		out[0] = 0;
 
-		for (int j = 0; j < partials; j++){
+		int lastOnsetState[partials][2];
 
+		for (int j = 0; j < partials; j++){
+			float onsetAmp = 1.0;
 			float detuneAmount = theDetuners[j]->next(currentFrame());
-			//printf("%f\n", detuneAmount);
 			float current_freq = freq + detuneAmount;
 			osc[j]->setfreq(current_freq);
+			onsetTimes->setphase(j);
+			//printf("%f\n", onsetTimes->next() * SR);
+			if (onsetTimes->next() * SR <= currentFrame()){
+				onsetAmp = 1;
+				lastOnsetState[j][1] = 1;
+				//printf("%i, %i, \n", lastOnsetState[j][0], lastOnsetState[j][1]);
+				if (lastOnsetState[j][1] != lastOnsetState[j][0]){
+					osc[j]->setphase(0);
+				}
+				lastOnsetState[j][0] = 1;
+				//printf("%i\n", lastOnsetState[j][0]);
+			} else {
+				onsetAmp = 0;
+				lastOnsetState[j][0] = 0;
+			}
 			float local_amp = (_amp / (j + 1));
-			float sig = osc[j]->next() * local_amp;
+			float sig = osc[j]->next() * local_amp * onsetAmp;
 			out[0] += sig;
 			
 		}
