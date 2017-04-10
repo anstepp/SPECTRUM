@@ -32,7 +32,7 @@ SPECTRUM::~SPECTRUM()
 	delete [] osc;
 	delete [] theDetuners;
 	delete [] theRand;
-	delete [] lastOnsetState;
+	//delete [] lastOnsetState;
 
 }
 
@@ -117,14 +117,19 @@ int SPECTRUM::init(double p[], int n_args)
 	double *onsetArray = (double *) getPFieldTable(6, &onsetLen);
 	onsetTimes = new Ooscili(SR, 1.0/partials, onsetArray, onsetLen);
 
-	lastOnsetState = new int*[partials];
+	// for (int i = 0; i < partials; i++){
+	// 	lastOnsetState[i] = new int[2];
+	// 	for (int j = 0; j < 2; j++){
+	// 		lastOnsetState[i][j] = 0;
+	// 		printf("%i\n", lastOnsetState[i][j]);
+	// 	}
+	// }
 
-	for (int i = 0; i < partials; i++){
-		lastOnsetState[i] = new int[2];
-		for (int j = 0; j < 2; j++){
-			lastOnsetState[i][j] = 0;
-			printf("%i\n", lastOnsetState[i][j]);
-		}
+	State State;
+
+	lastOnsetState = new int [partials];
+	for (int p = 0; p < partials; p++){
+		lastOnsetState[p] = State.notPlaying;
 	}
 
 	return nSamps();
@@ -148,6 +153,9 @@ void SPECTRUM::doupdate()
 
 int SPECTRUM::run()
 {
+
+	float onsetAmp = 0.0;
+
 	for (int i = 0; i < framesToRun(); i++) {
 
 		if (--_branch <= 0) {
@@ -159,27 +167,21 @@ int SPECTRUM::run()
 
 		out[0] = 0;
 
-		int lastOnsetState[partials][2];
-
 		for (int j = 0; j < partials; j++){
-			float onsetAmp = 1.0;
+			
 			float detuneAmount = theDetuners[j]->next(currentFrame());
 			float current_freq = freq + detuneAmount;
 			osc[j]->setfreq(current_freq);
 			onsetTimes->setphase(j);
-			//printf("%f\n", onsetTimes->next() * SR);
-			if (onsetTimes->next() * SR <= currentFrame()){
-				onsetAmp = 1;
-				lastOnsetState[j][1] = 1;
-				//printf("%i, %i, \n", lastOnsetState[j][0], lastOnsetState[j][1]);
-				if (lastOnsetState[j][1] != lastOnsetState[j][0]){
-					osc[j]->setphase(0);
-				}
-				lastOnsetState[j][0] = 1;
-				//printf("%i\n", lastOnsetState[j][0]);
-			} else {
-				onsetAmp = 0;
-				lastOnsetState[j][0] = 0;
+			if (lastOnsetState[j] == State::playing){
+				;
+			} else if (lastOnsetState[j] == State::notPlaying && onsetTimes->next() * SR <= currentFrame()){
+				lastOnsetState[j] = State::starting;
+			}
+			switch(lastOnsetState[j]){
+				case State::notPlaying : onsetAmp = 0; break; 
+				case State::starting : osc[j]->setphase(0); onsetAmp = 1; lastOnsetState[j] = State::playing; break;
+				case State::playing : onsetAmp = 1; break;
 			}
 			float local_amp = (_amp / (j + 1));
 			float sig = osc[j]->next() * local_amp * onsetAmp;

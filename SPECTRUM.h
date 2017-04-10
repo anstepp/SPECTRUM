@@ -24,12 +24,16 @@ private:
 	void doupdate();
 	double * getDetuneArray(double *, int, int);
 
+	int *lastOnsetState;
+
+	typedef struct State{
+		enum playState { playing, notPlaying, starting };
+	};
+
 	int _branch;
 	int partials, tablelen;
 	float _amp, freq;
 	double *wavetable;
-
-	int **lastOnsetState;
 
 	Ooscili **osc;
 	Ooscili **theDetuners;
