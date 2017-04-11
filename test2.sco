@@ -7,8 +7,8 @@ load("./libSPECTRUM.so")
 load("GVERB")
 
 
-bus_config("./libSPECTRUM.so", "aux 0-1 out")
-bus_config("GVERB", "aux 0-1 in", "out 0-1")
+//bus_config("./libSPECTRUM.so", "aux 0-1 out")
+//bus_config("GVERB", "aux 0-1 in", "out 0-1")
 
 //rtoutput("/Users/aaronstepp/Desktop/funny1.aif")
 
@@ -24,13 +24,12 @@ for (st = 0; st < max_dur; st += step_size) {
 	partials = 200;
 
    //this table determines the detuning amount - it's in triples time,amount,curve slope
-
-	table = maketable("curve", "nonorm", 1000, 0,irand(0,200),2, 100,irand(0,200),2, 250,irand(0,200),2, 400,irand(0,200),2, 600,5,2, 750,irand(0,200),4, 990,irand(0,200),2, 1000,irand(0,200));
-
+	table = maketable("curve", "nonorm", 1000, 0,irand(0,200),2, 1000,irand(0,200))
+	//this table is for onset times of the partials
     onset = maketable("curve", "nonorm", partials, 0,0,2, partials,0)
-   //vars: start, duration, amplitude, base frequency, number of partials, detuning curve, seed
+   //vars: start, duration, amplitude, base frequency, number of partials, detuning curve, onset curve, seed
 	SPECTRUM(st, dur, amp, freq, partials, table, onset, 0.5);
 	step_size = irand(0.125, 1);
 }
 
-GVERB(0, 0, max_dur, 0.9, 300, 100.0, 0.1, 1, 0.0, -11.0, -9.0, 20.0)
+//GVERB(0, 0, max_dur, 0.9, 300, 100.0, 0.1, 1, 0.0, -11.0, -9.0, 20.0)
