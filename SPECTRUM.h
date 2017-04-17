@@ -26,13 +26,13 @@ private:
 
 	int *lastOnsetState;
 
-	typedef struct State{
+	struct State{
 		enum playState { playing, notPlaying, starting };
 	};
 
 	int _branch;
 	int partials, tablelen;
-	float _amp, freq;
+	float _amp, freq, _pan;
 	double *wavetable;
 
 	Ooscili **osc;

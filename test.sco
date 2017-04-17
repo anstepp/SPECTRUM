@@ -5,16 +5,17 @@ rtsetparams(44100, 2)
 //you need the ./libSPECTRUM because this isn't part of the distribution yet
 load("./libSPECTRUM.so")
 
-reset(44100);
+//reset(44100);
 
 rtoutput("/Users/aaronstepp/Desktop/funny1.aif")
 
-step = 10
+step = 90
 
-for (st = 0; st < 60; st += step) {
+for (st = 0; st < 200; st += step) {
    dur = step;
    amp = 10000 //* maketable("curve", 1000, 0,0,2, 100,1,-2, 300,.85,0, 900,.85,2, 1000,0);
    //you can give pitches if you want, this just generates a random pitch from A1 to A4
+   env = maketable("curve", 1000, 0,1,2, 1000,0.5)
    freq = irand(880, 1270);
    partials = trand(100,200);
    //this table determines the detuning amount - it's in triples time,amount,curve slope
@@ -24,6 +25,8 @@ for (st = 0; st < 60; st += step) {
       901,200,2, irand(975,990),0,0, 1000,0);
    //table = maketable("line", 1000, 0,0, 1000,0)
    onset = maketable("curve", "nonorm", partials, 0,irand(0,4),2, partials/2,0,2, partials,irand(0,4));
-   SPECTRUM(st, dur, amp, freq, partials, table, onset, 0.5);
-   step = irand(10, 20)
+   seed = 0.5
+   pan = maketable("line", 1000, 0,0.5, 500,1, 1000,0)
+   SPECTRUM(st, dur, amp * env, freq, partials, table, onset, seed, pan)
+   step = irand(60, 90)
 }

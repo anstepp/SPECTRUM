@@ -117,20 +117,14 @@ int SPECTRUM::init(double p[], int n_args)
 	double *onsetArray = (double *) getPFieldTable(6, &onsetLen);
 	onsetTimes = new Ooscili(SR, 1.0/partials, onsetArray, onsetLen);
 
-	// for (int i = 0; i < partials; i++){
-	// 	lastOnsetState[i] = new int[2];
-	// 	for (int j = 0; j < 2; j++){
-	// 		lastOnsetState[i][j] = 0;
-	// 		printf("%i\n", lastOnsetState[i][j]);
-	// 	}
-	// }
-
-	State State;
+	State state;
 
 	lastOnsetState = new int [partials];
 	for (int p = 0; p < partials; p++){
-		lastOnsetState[p] = State.notPlaying;
+		lastOnsetState[p] = state.notPlaying;
 	}
+
+	_pan = p[8];
 
 	return nSamps();
 }
@@ -146,9 +140,10 @@ int SPECTRUM::configure()
 
 void SPECTRUM::doupdate()
 {
-	// double p[7];
-	// update(p, 2);
-	// _amp = p[2];
+	double p[9];
+	update(p, 8);
+	_amp = p[2];
+	_pan = p[8];
 }
 
 int SPECTRUM::run()
@@ -157,7 +152,6 @@ int SPECTRUM::run()
 	float onsetAmp = 0.0;
 
 	for (int i = 0; i < framesToRun(); i++) {
-
 		if (--_branch <= 0) {
 			doupdate();
 			_branch = getSkip();
@@ -166,6 +160,7 @@ int SPECTRUM::run()
 		float out[2];
 
 		out[0] = 0;
+		out[1] = 0;
 
 		for (int j = 0; j < partials; j++){
 			
@@ -184,12 +179,11 @@ int SPECTRUM::run()
 				case State::playing : onsetAmp = 1; break;
 			}
 			float local_amp = (_amp / (j + 1));
-			float sig = osc[j]->next() * local_amp * onsetAmp;
-			out[0] += sig;
-			
+			float sig = osc[j]->next() * (local_amp * onsetAmp);
+			printf("%f\n", _pan);
+			out[0] += sig * _pan;
+			//out[1] += sig * (1.0 - _pan);
 		}
-
-		out[1] = 0;
 
 		rtaddout(out);
 		increment();
