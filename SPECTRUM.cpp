@@ -66,6 +66,7 @@ double * SPECTRUM::getDetuneArray(double array[], int arrayLen, int partial)
 int SPECTRUM::init(double p[], int n_args)
 {
 
+	//out of order to prevent segfault
 	int seed = p[7];
 	theRand = new Orand(seed);
 
@@ -82,9 +83,9 @@ int SPECTRUM::init(double p[], int n_args)
 
 	float freqraw = p[3];
 	if (freqraw < 15.0)
-		freq = cpspch(freqraw);
+		_freq = cpspch(freqraw);
 	else
-		freq = freqraw;
+		_freq = freqraw;
 
 	partials = p[4];
 
@@ -110,7 +111,7 @@ int SPECTRUM::init(double p[], int n_args)
 
 	for (int i = 0; i < partials; i++){
 		//make oscillator bank
-		osc[i] = new Ooscili(SR, freq * (i + 1), wavetable, tablelen);
+		osc[i] = new Ooscili(SR, _freq * (i + 1), wavetable, tablelen);
 	}
 
 	int onsetLen;
@@ -135,14 +136,12 @@ int SPECTRUM::configure()
 	return 0;
 }
 
-
-// Called at the control rate to update parameters like amplitude, pan, etc.
-
 void SPECTRUM::doupdate()
 {
 	double p[9];
-	update(p, 8);
+	update(p, 9, kAmp | kFreq | kPan);
 	_amp = p[2];
+	_freq = p[3];
 	_pan = p[8];
 }
 
@@ -165,24 +164,25 @@ int SPECTRUM::run()
 		for (int j = 0; j < partials; j++){
 			
 			float detuneAmount = theDetuners[j]->next(currentFrame());
-			float current_freq = freq + detuneAmount;
+			float current_freq = _freq + detuneAmount;
 			osc[j]->setfreq(current_freq);
 			onsetTimes->setphase(j);
 			if (lastOnsetState[j] == State::playing){
 				;
-			} else if (lastOnsetState[j] == State::notPlaying && onsetTimes->next() * SR <= currentFrame()){
+			} else if (lastOnsetState[j] == State::notPlaying 
+					   && onsetTimes->next() * SR <= currentFrame()){
 				lastOnsetState[j] = State::starting;
 			}
 			switch(lastOnsetState[j]){
 				case State::notPlaying : onsetAmp = 0; break; 
-				case State::starting : osc[j]->setphase(0); onsetAmp = 1; lastOnsetState[j] = State::playing; break;
+				case State::starting : osc[j]->setphase(0); 
+					onsetAmp = 1; lastOnsetState[j] = State::playing; break;
 				case State::playing : onsetAmp = 1; break;
 			}
 			float local_amp = (_amp / (j + 1));
 			float sig = osc[j]->next() * (local_amp * onsetAmp);
-			printf("%f\n", _pan);
 			out[0] += sig * _pan;
-			//out[1] += sig * (1.0 - _pan);
+			out[1] += sig * (1.0 - _pan);
 		}
 
 		rtaddout(out);

@@ -32,7 +32,7 @@ private:
 
 	int _branch;
 	int partials, tablelen;
-	float _amp, freq, _pan;
+	float _amp, _freq, _pan;
 	double *wavetable;
 
 	Ooscili **osc;
@@ -40,5 +40,11 @@ private:
 	Orand *theRand;
 	Ooscili *onsetTimes;
 
+};
+
+enum{
+	kAmp = 1 << 2,
+	kFreq = 1 << 3,
+	kPan = 1 << 8,
 };
 
