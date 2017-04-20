@@ -32,8 +32,6 @@ SPECTRUM::~SPECTRUM()
 	delete [] osc;
 	delete [] theDetuners;
 	delete [] theRand;
-	//delete [] lastOnsetState;
-
 }
 
 double * SPECTRUM::getDetuneArray(double array[], int arrayLen, int partial)
