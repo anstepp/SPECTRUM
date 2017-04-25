@@ -1,5 +1,20 @@
 /* SPECTRUM - simple additive synthesis instrument
 
+A saw wave detuner. It also allows for onset envelope control.
+
+p0 = start
+p1 = duration
+p2 = amplitude
+p3 = base frequency
+p4 = number of partials
+p5 = detuning table
+p6 = onset table
+p7 = seed
+p8 = pan
+
+p2 (amplitude), p3 (base frequency), p5 (detuning table),
+p6 (onset table), and p8 (panning) can recieve update
+information from a table.
 
 */
 #include <stdio.h>
