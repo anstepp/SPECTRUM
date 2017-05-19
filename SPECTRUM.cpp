@@ -12,6 +12,14 @@ p6 = onset table
 p7 = seed
 p8 = pan
 
+SPECTRUM takes a defined number of partials [p4] to
+create an additive oscillator bank. You can then detune
+this table over time using the detuning table [p5] to
+detune the partials logarithmically. That is, the amount
+of detuning is the same in pitch terms, but not in Hz. Each
+partial is randomly selected to go up or down, to get a
+different set of directions, change the seed [p7].
+
 p2 (amplitude), p3 (base frequency), p5 (detuning table),
 p6 (onset table), and p8 (panning) can recieve update
 information from a table.
