@@ -12,17 +12,19 @@ p6 = onset table
 p7 = seed
 p8 = pan
 
-<<<<<<< HEAD
 SPECTRUM takes a defined number of partials [p4] to
 create an additive oscillator bank. You can then detune
 this table over time using the detuning table [p5] to
 detune the partials logarithmically. That is, the amount
 of detuning is the same in pitch terms, but not in Hz. Each
 partial is randomly selected to go up or down, to get a
-different set of directions, change the seed [p7].
+different set of directions, change the seed [p7]. The
+onset table [p6] is a "vertical" table that determines
+when a partial begins playing. To control this, use
+a maketable. It can be helpful to make the size of the
+maketable the same size as the paritals, allowing discrete
+control of the partials.
 
-=======
->>>>>>> 490c5762161f150d1fdf15833663a760af1a94cc
 p2 (amplitude), p3 (base frequency), p5 (detuning table),
 p6 (onset table), and p8 (panning) can recieve update
 information from a table.
